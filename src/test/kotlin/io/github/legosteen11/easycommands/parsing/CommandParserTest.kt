@@ -37,8 +37,8 @@ data class HelloWorldCommand(
 data class MultiParamCommand (
         @Argument("name", optional = true)
         val name: String = "default1",
-        @Argument("secondName", optional = false)
-        val secondName: String = "default1",
+        @Argument("secondName")
+        val secondName: String,
         @Argument("thirdName", optional = true)
         val thirdName: String = "default3"
 ) : SimpleCommand {

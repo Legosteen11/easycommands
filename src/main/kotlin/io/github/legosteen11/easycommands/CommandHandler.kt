@@ -66,7 +66,7 @@ class CommandHandler(val exceptionParser: IExceptionParser = EnglishExceptionPar
      * @throws UnparsableTypeException Thrown when you try to add a field with a type that is not (yet) parsable.
      */
     @Throws(InvalidAnnotationException::class, MissingAnnotationException::class, UnparsableTypeException::class)
-    fun addCommand(vararg commands: KClass<out ICommand>) {
+    fun addCommands(vararg commands: KClass<out ICommand>) {
         commands.forEach { command ->
             // use this to check whether the command is parsable. It'll throw exceptions if it's not
             CommandParser.getParameters(command, typeParser)
