@@ -1,4 +1,4 @@
-package io.github.legosteen11.easycommands.parsing
+package io.github.legosteen11.easycommands.parsing.typeparsing
 
 import io.github.legosteen11.easycommands.command.ICommand
 import io.github.legosteen11.easycommands.exception.developerissue.UnparsableTypeException

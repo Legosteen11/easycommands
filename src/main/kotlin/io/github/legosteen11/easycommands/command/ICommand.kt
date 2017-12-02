@@ -1,7 +1,7 @@
 package io.github.legosteen11.easycommands.command
 
-import org.bukkit.command.CommandSender
+import io.github.legosteen11.easycommands.user.ICommandSender
 
 interface ICommand {
-    fun execute(commandSender: CommandSender)
+    fun execute(commandSender: ICommandSender)
 }

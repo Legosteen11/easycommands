@@ -1,4 +1,4 @@
-package io.github.legosteen11.easycommands.parsing
+package io.github.legosteen11.easycommands.parsing.typeparsing
 
 import io.github.legosteen11.easycommands.command.ICommand
 import io.github.legosteen11.easycommands.exception.developerissue.UnparsableTypeException
@@ -9,12 +9,11 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KType
 import kotlin.reflect.full.createType
 
-object DefaultTypeParser : ITypeParser {
-    val parsable_types = arrayOf<KClass<out Any>>(
+object DefaultTypeParser: ITypeParser {
+    val parsable_types = arrayOf(
             String::class,
             Int::class,
-            Double::class,
-            OfflinePlayer::class
+            Double::class
     )
 
     override fun isParsable(type: KType): Boolean = parsable_types.map { it.createType() }.contains(type)
@@ -24,7 +23,6 @@ object DefaultTypeParser : ITypeParser {
             String::class.createType() -> value
             Int::class.createType() -> value.toIntOrNull()
             Double::class.createType() -> value.toDoubleOrNull()
-            OfflinePlayer::class.createType() -> Bukkit.getServer().getOfflinePlayer(value)
             else -> throw UnparsableTypeException(parameter, command, expectedType)
         }
 

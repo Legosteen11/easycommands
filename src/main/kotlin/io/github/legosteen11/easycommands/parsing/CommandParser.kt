@@ -3,9 +3,11 @@ package io.github.legosteen11.easycommands.parsing
 import io.github.legosteen11.easycommands.annotation.Argument
 import io.github.legosteen11.easycommands.command.ICommand
 import io.github.legosteen11.easycommands.exception.developerissue.InvalidAnnotationException
-import io.github.legosteen11.easycommands.exception.playerissue.MissingParameterException
 import io.github.legosteen11.easycommands.exception.developerissue.MissingAnnotationException
 import io.github.legosteen11.easycommands.exception.developerissue.UnparsableTypeException
+import io.github.legosteen11.easycommands.exception.playerissue.MissingParameterException
+import io.github.legosteen11.easycommands.parsing.typeparsing.BukkitTypeParser
+import io.github.legosteen11.easycommands.parsing.typeparsing.ITypeParser
 import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
 import kotlin.reflect.full.findAnnotation
@@ -16,7 +18,7 @@ internal object CommandParser {
      * @exception MissingParameterException
      */
     @Throws(MissingParameterException::class, IllegalArgumentException::class)
-    fun parse(command: KClass<out ICommand>, parameters: Array<String>, parser: ITypeParser = DefaultTypeParser): ICommand {
+    fun parse(command: KClass<out ICommand>, parameters: Array<String>, parser: ITypeParser = BukkitTypeParser): ICommand {
         val constructorParams = getParameters(command, parser)
 
         if(parameters.size < constructorParams.filter { !it.second.optional }.size) { // not enough argument

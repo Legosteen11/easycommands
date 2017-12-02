@@ -1,14 +1,11 @@
 package io.github.legosteen11.easycommands.parsing
 
-import io.github.legosteen11.easycommands.command.SimpleCommand
 import io.github.legosteen11.easycommands.annotation.Argument
 import io.github.legosteen11.easycommands.annotation.Command
-import mockit.integration.junit4.JMockit
-import org.bukkit.command.CommandSender
+import io.github.legosteen11.easycommands.command.SimpleCommand
+import io.github.legosteen11.easycommands.user.ICommandSender
 import org.junit.Test
-import org.junit.runner.RunWith
 import kotlin.reflect.full.createType
-
 import kotlin.test.assertEquals
 
 @Command("empty", "Empty command")
@@ -17,7 +14,7 @@ class EmptyCommand(
 ) : SimpleCommand {
     var run = false
 
-    override fun execute(commandSender: CommandSender) {
+    override fun execute(commandSender: ICommandSender) {
         run = true
     }
 
@@ -28,8 +25,8 @@ data class HelloWorldCommand(
         @Argument("name", optional = true)
         val name: String = "World"
 ): SimpleCommand {
-    override fun execute(commandSender: CommandSender) {
-        println("Hello, $name")
+    override fun execute(commandSender: ICommandSender) {
+        commandSender.sendMessage("Hello, $name")
     }
 }
 
@@ -42,8 +39,8 @@ data class MultiParamCommand (
         @Argument("thirdName", optional = true)
         val thirdName: String = "default3"
 ) : SimpleCommand {
-    override fun execute(commandSender: CommandSender) {
-        println("name = $name, secondName = $secondName, thirdName = $thirdName")
+    override fun execute(commandSender: ICommandSender) {
+        commandSender.sendMessage("name = $name, secondName = $secondName, thirdName = $thirdName")
     }
 }
 
@@ -56,12 +53,11 @@ data class ParsingCommand (
         @Argument("double2")
         val double2: Double
 ) : SimpleCommand {
-    override fun execute(commandSender: CommandSender) {
-        println("age = $age")
+    override fun execute(commandSender: ICommandSender) {
+        commandSender.sendMessage("age = $age")
     }
 }
 
-@RunWith(JMockit::class)
 class CommandParserTest {
     @Test
     fun parse() {

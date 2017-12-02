@@ -3,57 +3,48 @@ package io.github.legosteen11.easycommands
 import io.github.legosteen11.easycommands.annotation.Command
 import io.github.legosteen11.easycommands.command.CommandWrapper
 import io.github.legosteen11.easycommands.command.ICommand
+import io.github.legosteen11.easycommands.exception.IExceptionHandler
+import io.github.legosteen11.easycommands.exception.developerissue.CommandNotFoundException
 import io.github.legosteen11.easycommands.exception.developerissue.InvalidAnnotationException
 import io.github.legosteen11.easycommands.exception.developerissue.MissingAnnotationException
 import io.github.legosteen11.easycommands.exception.developerissue.UnparsableTypeException
-import io.github.legosteen11.easycommands.exception.playerissue.MissingParameterException
-import io.github.legosteen11.easycommands.exception.playerissue.InvalidTypeException
-import io.github.legosteen11.easycommands.messages.EnglishExceptionParser
-import io.github.legosteen11.easycommands.messages.IExceptionParser
 import io.github.legosteen11.easycommands.parsing.CommandParser
-import io.github.legosteen11.easycommands.parsing.DefaultTypeParser
-import io.github.legosteen11.easycommands.parsing.ITypeParser
-import org.bukkit.Bukkit
-import org.bukkit.command.CommandExecutor
-import org.bukkit.command.CommandSender
-import org.bukkit.command.TabCompleter
+import io.github.legosteen11.easycommands.parsing.typeparsing.DefaultTypeParser
+import io.github.legosteen11.easycommands.parsing.typeparsing.ITypeParser
+import io.github.legosteen11.easycommands.user.ICommandSender
+import mu.KotlinLogging
 import kotlin.reflect.KClass
 import kotlin.reflect.full.findAnnotation
 
-/**
- * Use the commandhandler in your plugin to manage commands.
- *
- * @param exceptionParser The exception parser. By default this will be the english exception parser. You can create your own by extending IExceptionParser
- */
-class CommandHandler(val exceptionParser: IExceptionParser = EnglishExceptionParser, val typeParser: ITypeParser = DefaultTypeParser) : CommandExecutor, TabCompleter {
+class CommandHandler(private val exceptionHandler: IExceptionHandler,
+                     private val typeParser: ITypeParser = DefaultTypeParser,
+                     private val alwaysExecute: ((ICommandSender, String, Array<String>) -> Unit)? = null,
+                     private val log: Boolean = true) {
     private val commands = arrayListOf<CommandWrapper>()
+    private val logger = KotlinLogging.logger {  }
 
-    override fun onTabComplete(commandSender: CommandSender?, bukkitCommand: org.bukkit.command.Command?, commandName: String, parameters: Array<String>): MutableList<String> {
-        val command = getCommandByName(commandName) ?: throw IllegalArgumentException("CommandHandler was registered for the command $commandName, but there is no command with that name...")
+    /**
+     * Handle the command
+     *
+     * @param commandSender The command sender
+     * @param commandName The command name
+     * @param parameters The command parameters
+     */
+    fun onCommand(commandSender: ICommandSender, commandName: String, parameters: Array<String>) {
+        if(log)
+            logger.info { "${commandSender.getName()} (${commandSender.getIdentifier()}) executed $commandName with arguments: ${parameters.joinToString()}." }
 
-        val commandParams = CommandParser.getParameters(command.command, typeParser)
-
-        val currentParam = commandParams.getOrNull(parameters.size) ?: return mutableListOf() // return empty list of no param found
-
-        return typeParser.autocomplete(currentParam.first.type, parameters.last()).toMutableList()
-    }
-
-    override fun onCommand(commandSender: CommandSender, bukkitCommand: org.bukkit.command.Command, commandName: String, parameters: Array<String>): Boolean {
-        val command = getCommandByName(commandName) ?: throw IllegalArgumentException("CommandHandler was registered for the command $commandName, but there is no command with that name...")
+        alwaysExecute?.invoke(commandSender, commandName, parameters)
 
         try {
+            val command = getCommandByName(commandName) ?: throw CommandNotFoundException(commandName)
+
             val parsedCommand = CommandParser.parse(command.command, parameters, typeParser)
 
             parsedCommand.execute(commandSender)
-        } catch (e: MissingParameterException) {
-            exceptionParser.parseMissingParameterException(e)
-            return false
-        } catch (e: InvalidTypeException) {
-            exceptionParser.parseInvalidTypeException(e)
-            return false
+        } catch (e: Throwable) {
+            exceptionHandler.handleException(e, commandSender)
         }
-
-        return true
     }
 
     /**
@@ -72,11 +63,6 @@ class CommandHandler(val exceptionParser: IExceptionParser = EnglishExceptionPar
             CommandParser.getParameters(command, typeParser)
 
             val commandWrapper = CommandWrapper(command, command.findAnnotation<Command>()!!)
-
-            Bukkit.getPluginCommand(commandWrapper.getName())?.let {
-                it.executor = this
-                it.tabCompleter = this
-            }
 
             this.commands.add(commandWrapper)
         }
