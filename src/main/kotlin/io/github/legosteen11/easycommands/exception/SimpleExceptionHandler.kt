@@ -40,13 +40,37 @@ open class SimpleExceptionHandler(private val alwaysExcecute: ((ICommandSender, 
         handleUnhandledException(exception, commandSender)
     }
 
+    /**
+     * Add an exception handler for the given exception type
+     *
+     * @param exceptionType The exception type
+     * @param handle What to do when the exception is thrown
+     */
     fun addExceptionHandlerWithType(exceptionType: KClass<out Throwable>, handle: (Throwable, ICommandSender) -> Unit) {
         exceptions.put(exceptionType, handle)
     }
 
+    /**
+     * Add an exception handler for the given exception type
+     *
+     * @param T The exception type
+     * @param handle What to do when the exception is thrown
+     */
     inline fun <reified T: Throwable> addExceptionHandler(crossinline handle: (Throwable, ICommandSender) -> Unit) {
         addExceptionHandlerWithType(T::class) { throwable, iCommandSender ->
             handle(throwable, iCommandSender)
+        }
+    }
+
+    /**
+     * Add an exception handler that sends the commandsender a message
+     *
+     * @param T The exception type
+     * @param message The message to send to the commandsender
+     */
+    inline fun <reified T: Throwable> addExceptionHandler(message: String) {
+        addExceptionHandlerWithType(T::class) { throwable, iCommandSender ->
+            iCommandSender.sendMessage(message)
         }
     }
 }

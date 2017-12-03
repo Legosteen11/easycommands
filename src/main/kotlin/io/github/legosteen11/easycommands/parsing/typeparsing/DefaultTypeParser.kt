@@ -22,7 +22,7 @@ object DefaultTypeParser: ITypeParser {
         val parsedVal =  when(expectedType) {
             String::class.createType() -> value
             Int::class.createType() -> value.toIntOrNull()
-            Double::class.createType() -> value.toDoubleOrNull()
+            Double::class.createType() -> value.replace(",", ".").toDoubleOrNull()
             else -> throw UnparsableTypeException(parameter, command, expectedType)
         }
 
