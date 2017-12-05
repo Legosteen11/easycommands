@@ -17,7 +17,7 @@ class CommandHandlerTest {
     @Command("testunhandledexception", "Test exception command")
     class TestUnhandledExceptionCommand(
             // empty
-    ) : SimpleCommand {
+    ) : SimpleCommand() {
         override fun execute(commandSender: ICommandSender) {
             throw SimpleExceptionHandlerTest.TestException()
         }
@@ -27,9 +27,18 @@ class CommandHandlerTest {
     class TestTestExceptionCommand(
             @Argument("test")
             val testValue: String
-    ) : SimpleCommand {
+    ) : SimpleCommand() {
         override fun execute(commandSender: ICommandSender) {
             throw SimpleExceptionHandlerTest.AnotherTestException(testValue)
+        }
+    }
+
+    @Command("commandhandlertest", "Test getHandler")
+    class TestHandlerCommand(
+            // empty
+    ) : SimpleCommand() {
+        override fun execute(commandSender: ICommandSender) {
+            commandSender.sendMessage("commands=${commandHandler.getCommands().joinToString()}")
         }
     }
 
@@ -59,7 +68,10 @@ class CommandHandlerTest {
 
                 // test exceptions:
                 TestUnhandledExceptionCommand::class,
-                TestTestExceptionCommand::class
+                TestTestExceptionCommand::class,
+
+                // test setting of commandHandler
+                TestHandlerCommand::class
         )
 
         commandHandler.onCommand(commandSender, "helloworld", arrayOf())
@@ -74,5 +86,8 @@ class CommandHandlerTest {
 
         commandHandler.onCommand(commandSender, "testexception", arrayOf("test"))
         assert(commandSender.received("handled exception"))
+
+        commandHandler.onCommand(commandSender, "commandhandlertest", arrayOf())
+        assert(commandSender.received("commands=${commandHandler.getCommands().joinToString()}"))
     }
 }

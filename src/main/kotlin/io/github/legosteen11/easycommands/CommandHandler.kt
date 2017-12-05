@@ -8,6 +8,7 @@ import io.github.legosteen11.easycommands.exception.developerissue.CommandNotFou
 import io.github.legosteen11.easycommands.exception.developerissue.InvalidAnnotationException
 import io.github.legosteen11.easycommands.exception.developerissue.MissingAnnotationException
 import io.github.legosteen11.easycommands.exception.developerissue.UnparsableTypeException
+import io.github.legosteen11.easycommands.exception.playerissue.MissingParameterException
 import io.github.legosteen11.easycommands.parsing.CommandParser
 import io.github.legosteen11.easycommands.parsing.typeparsing.DefaultTypeParser
 import io.github.legosteen11.easycommands.parsing.typeparsing.ITypeParser
@@ -16,7 +17,7 @@ import mu.KotlinLogging
 import kotlin.reflect.KClass
 import kotlin.reflect.full.findAnnotation
 
-class CommandHandler(private val exceptionHandler: IExceptionHandler,
+open class CommandHandler(private val exceptionHandler: IExceptionHandler,
                      private val typeParser: ITypeParser = DefaultTypeParser,
                      private val alwaysExecute: ((ICommandSender, String, Array<String>) -> Unit)? = null,
                      private val log: Boolean = true) {
@@ -36,14 +37,14 @@ class CommandHandler(private val exceptionHandler: IExceptionHandler,
 
         alwaysExecute?.invoke(commandSender, commandName, parameters)
 
-        try {
+        runBlock(commandSender) {
             val command = getCommandByName(commandName) ?: throw CommandNotFoundException(commandName)
 
-            val parsedCommand = CommandParser.parse(command.command, parameters, typeParser)
+            val parsedCommand = CommandParser.parse(command.command, parameters, typeParser).apply {
+                commandHandler = this@CommandHandler
+            }
 
             parsedCommand.execute(commandSender)
-        } catch (e: Throwable) {
-            exceptionHandler.handleException(e, commandSender)
         }
     }
 
@@ -65,6 +66,48 @@ class CommandHandler(private val exceptionHandler: IExceptionHandler,
             val commandWrapper = CommandWrapper(command, command.findAnnotation<Command>()!!)
 
             this.commands.add(commandWrapper)
+        }
+    }
+
+    /**
+     * Get all the commands that are registered
+     *
+     * @return The commands
+     */
+    fun getCommands(): Array<CommandWrapper> = commands.toTypedArray()
+
+    /**
+     * Get an array of possible autocompleted results for parameters
+     *
+     * @param commandSender The command sender
+     * @param commandName The command name
+     * @param parameters The parameters
+     *
+     * @return The autocompleted values.
+     */
+    fun autoComplete(commandSender: ICommandSender, commandName: String, parameters: Array<String>): Array<String> {
+        try {
+            val command = getCommandByName(commandName) ?: return emptyArray()
+
+            val parameterType = CommandParser.getParameters(command.command, typeParser).getOrNull(parameters.size-1)?.first?.type ?: return emptyArray()
+
+            return typeParser.autocomplete(parameterType, parameters.last())
+        } catch (e: Throwable) {
+            return emptyArray()
+        }
+    }
+
+    /**
+     * Run code in a block that catches and handles exceptions.
+     *
+     * @param commandSender The commandsender
+     * @param block The code block
+     */
+    fun runBlock(commandSender: ICommandSender, block: () -> Unit) {
+        try {
+            block()
+        } catch (e: Throwable) {
+            exceptionHandler.handleException(e, commandSender)
         }
     }
 

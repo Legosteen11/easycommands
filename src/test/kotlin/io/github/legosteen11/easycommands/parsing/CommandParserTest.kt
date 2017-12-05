@@ -11,7 +11,7 @@ import kotlin.test.assertEquals
 @Command("empty", "Empty command")
 class EmptyCommand(
         // empty
-) : SimpleCommand {
+) : SimpleCommand() {
     var run = false
 
     override fun execute(commandSender: ICommandSender) {
@@ -24,7 +24,7 @@ class EmptyCommand(
 data class HelloWorldCommand(
         @Argument("name", optional = true)
         val name: String = "World"
-): SimpleCommand {
+): SimpleCommand() {
     override fun execute(commandSender: ICommandSender) {
         commandSender.sendMessage("Hello, $name")
     }
@@ -38,7 +38,7 @@ data class MultiParamCommand (
         val secondName: String,
         @Argument("thirdName", optional = true)
         val thirdName: String = "default3"
-) : SimpleCommand {
+) : SimpleCommand() {
     override fun execute(commandSender: ICommandSender) {
         commandSender.sendMessage("name = $name, secondName = $secondName, thirdName = $thirdName")
     }
@@ -52,7 +52,7 @@ data class ParsingCommand (
         val double: Double,
         @Argument("double2")
         val double2: Double
-) : SimpleCommand {
+) : SimpleCommand() {
     override fun execute(commandSender: ICommandSender) {
         commandSender.sendMessage("age = $age")
     }
