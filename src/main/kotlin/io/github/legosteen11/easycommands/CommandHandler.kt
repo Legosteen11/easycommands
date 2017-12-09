@@ -8,7 +8,7 @@ import io.github.legosteen11.easycommands.exception.developerissue.CommandNotFou
 import io.github.legosteen11.easycommands.exception.developerissue.InvalidAnnotationException
 import io.github.legosteen11.easycommands.exception.developerissue.MissingAnnotationException
 import io.github.legosteen11.easycommands.exception.developerissue.UnparsableTypeException
-import io.github.legosteen11.easycommands.exception.playerissue.MissingParameterException
+import io.github.legosteen11.easycommands.exception.playerissue.SubCommandNotFoundException
 import io.github.legosteen11.easycommands.parsing.CommandParser
 import io.github.legosteen11.easycommands.parsing.typeparsing.DefaultTypeParser
 import io.github.legosteen11.easycommands.parsing.typeparsing.ITypeParser
@@ -22,6 +22,7 @@ open class CommandHandler(private val exceptionHandler: IExceptionHandler,
                      private val alwaysExecute: ((ICommandSender, String, Array<String>) -> Unit)? = null,
                      private val log: Boolean = true) {
     private val commands = arrayListOf<CommandWrapper>()
+    private val superCommands = hashMapOf<CommandWrapper, Array<CommandWrapper>>()
     private val logger = KotlinLogging.logger {  }
 
     /**
@@ -38,14 +39,28 @@ open class CommandHandler(private val exceptionHandler: IExceptionHandler,
         alwaysExecute?.invoke(commandSender, commandName, parameters)
 
         runBlock(commandSender) {
-            val command = getCommandByName(commandName) ?: throw CommandNotFoundException(commandName)
+            val command = getCommandByName(commandName)
 
-            val parsedCommand = CommandParser.parse(command.command, parameters, typeParser).apply {
-                commandHandler = this@CommandHandler
-            }
+            val parsedCommand = if(command == null) {
+                val superCommand = getSuperCommandByName(commandName) ?: throw CommandNotFoundException(commandName)
+                val subCommandName = parameters.getOrNull(0)
+
+                if(subCommandName == null)
+                    parseCommand(superCommand.first, emptyArray())
+                else {
+                    val subCommand = getCommandByName(parameters[0], superCommand.second.toList()) ?: throw SubCommandNotFoundException(superCommand.first, superCommand.second)
+
+                    parseCommand(subCommand, parameters.drop(1).toTypedArray())
+                }
+            } else
+                parseCommand(command, parameters)
 
             parsedCommand.execute(commandSender)
         }
+    }
+
+    private fun parseCommand(command: CommandWrapper, parameters: Array<String>): ICommand = CommandParser.parse(command.command, parameters, typeParser).apply {
+        commandHandler = this@CommandHandler
     }
 
     /**
@@ -111,5 +126,33 @@ open class CommandHandler(private val exceptionHandler: IExceptionHandler,
         }
     }
 
-    private fun getCommandByName(commandName: String) = commands.firstOrNull { it.getName().toLowerCase() == commandName.toLowerCase() }
+    /**
+     * Add a supercommand with subcommands to listen for.
+     *
+     * @param superCommand The supercommand to add
+     * @param commands The subcommands to add
+     *
+     * @throws InvalidAnnotationException Thrown when an annotation is not correctly configured (for example: the annotation says a field is optional, but there is no default parameter)
+     * @throws MissingAnnotationException Thrown when there is a field or command without an annotation.
+     * @throws UnparsableTypeException Thrown when you try to add a field with a type that is not (yet) parsable.
+     */
+    @Throws(InvalidAnnotationException::class, MissingAnnotationException::class, UnparsableTypeException::class)
+    fun addSuperCommand(superCommand: KClass<out ICommand>, vararg commands: KClass<out ICommand>) {
+        CommandParser.getParameters(superCommand, typeParser)
+        val superCommandWrapper = CommandWrapper(superCommand, superCommand.findAnnotation<Command>()!!)
+
+        val commandWrappers = arrayListOf<CommandWrapper>()
+
+        commands.forEach { command ->
+            CommandParser.getParameters(command, typeParser)
+
+            commandWrappers.add(CommandWrapper(command, command.findAnnotation<Command>()!!))
+        }
+
+        superCommands.put(superCommandWrapper, commandWrappers.toTypedArray())
+    }
+
+    private fun getCommandByName(commandName: String, commandList: Iterable<CommandWrapper> = commands) = commandList.firstOrNull { it.getName().toLowerCase() == commandName.toLowerCase() }
+
+    private fun getSuperCommandByName(commandName: String) = superCommands.map { it.key to it.value }.firstOrNull { it.first.getName().toLowerCase() == commandName.toLowerCase() }
 }
