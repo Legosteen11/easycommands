@@ -5,16 +5,17 @@ import io.github.legosteen11.easycommands.exception.playerissue.InvalidTypeExcep
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
 import kotlin.reflect.full.createType
+import kotlin.reflect.full.withNullability
 
 open class SimpleTypeParser: ITypeParser {
     private val parsers = hashMapOf<KType, Pair<(String) -> Any?, ((String) -> Array<String>)?>>()
 
-    override fun isParsable(type: KType): Boolean = parsers.contains(type)
+    override fun isParsable(type: KType): Boolean = parsers.contains(type.withNullability(false))
 
-    override fun parse(expectedType: KType, value: String, command: KClass<out ICommand>, parameter: String): Any = parsers[expectedType]?.first?.invoke(value)
+    override fun parse(expectedType: KType, value: String, command: KClass<out ICommand>, parameter: String): Any = parsers[expectedType.withNullability(false)]?.first?.invoke(value)
             ?: throw InvalidTypeException(command, parameter, expectedType)
 
-    override fun autocomplete(expectedType: KType, currentValue: String): Array<String> = parsers[expectedType]?.second?.invoke(currentValue) ?: emptyArray()
+    override fun autocomplete(expectedType: KType, currentValue: String): Array<String> = parsers[expectedType.withNullability(false)]?.second?.invoke(currentValue) ?: emptyArray()
 
     /**
      * Add a parser and autocompleter for the given type

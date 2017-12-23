@@ -89,7 +89,7 @@ open class CommandHandler(private val exceptionHandler: IExceptionHandler,
      *
      * @return The commands
      */
-    fun getCommands(): Array<CommandWrapper> = commands.toTypedArray()
+    fun getCommands(): Array<CommandWrapper> = commands.plus(superCommands.keys).toTypedArray()
 
     /**
      * Get an array of possible autocompleted results for parameters

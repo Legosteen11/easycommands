@@ -2,6 +2,7 @@ package io.github.legosteen11.easycommands
 
 import io.github.legosteen11.easycommands.annotation.Argument
 import io.github.legosteen11.easycommands.annotation.Command
+import io.github.legosteen11.easycommands.command.CommandWrapper
 import io.github.legosteen11.easycommands.command.SimpleCommand
 import io.github.legosteen11.easycommands.exception.DefaultExceptionHandler
 import io.github.legosteen11.easycommands.exception.SimpleExceptionHandlerTest
@@ -13,6 +14,9 @@ import io.github.legosteen11.easycommands.parsing.ParsingCommand
 import io.github.legosteen11.easycommands.user.ICommandSender
 import io.github.legosteen11.easycommands.user.TestCommandSender
 import org.junit.Test
+import kotlin.reflect.full.findAnnotation
+import kotlin.test.assertEquals
+import kotlin.test.fail
 
 class CommandHandlerTest {
     @Command("testunhandledexception", "Test exception command")
@@ -140,5 +144,7 @@ class CommandHandlerTest {
 
         commandHandler.onCommand(commandSender, "supercommandtest", arrayOf("subcommandtest2", "test1", "test2"))
         assert(commandSender.received("subcommandtest2:test1;test2"))
+
+        assert(commandHandler.getCommands().map { it.getName() }.contains("supercommandtest"))
     }
 }
