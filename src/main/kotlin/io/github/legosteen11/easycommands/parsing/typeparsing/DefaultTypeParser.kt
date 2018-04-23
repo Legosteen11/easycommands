@@ -3,8 +3,6 @@ package io.github.legosteen11.easycommands.parsing.typeparsing
 import io.github.legosteen11.easycommands.command.ICommand
 import io.github.legosteen11.easycommands.exception.developerissue.UnparsableTypeException
 import io.github.legosteen11.easycommands.exception.playerissue.InvalidTypeException
-import org.bukkit.Bukkit
-import org.bukkit.OfflinePlayer
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
 import kotlin.reflect.full.createType
@@ -31,7 +29,6 @@ object DefaultTypeParser: ITypeParser {
 
     override fun autocomplete(expectedType: KType, currentValue: String): Array<String> =
             when(expectedType) {
-                OfflinePlayer::class.createType() -> Bukkit.getServer().offlinePlayers.filter { it.name.toLowerCase().contains(currentValue.toLowerCase()) }.map { it.name }.toTypedArray()
                 else -> arrayOf()
             }
 }
