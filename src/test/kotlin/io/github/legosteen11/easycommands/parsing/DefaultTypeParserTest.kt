@@ -2,7 +2,6 @@ package io.github.legosteen11.easycommands.parsing
 
 import io.github.legosteen11.easycommands.command.SimpleCommand
 import io.github.legosteen11.easycommands.parsing.typeparsing.DefaultTypeParser
-import org.bukkit.OfflinePlayer
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import kotlin.reflect.full.createType
@@ -13,7 +12,6 @@ class DefaultTypeParserTest {
         assertEquals(true, DefaultTypeParser.isParsable(String::class.createType()))
         assertEquals(true, DefaultTypeParser.isParsable(Int::class.createType()))
         assertEquals(true, DefaultTypeParser.isParsable(Double::class.createType()))
-        assertEquals(false, DefaultTypeParser.isParsable(OfflinePlayer::class.createType()))
     }
 
     @Test
